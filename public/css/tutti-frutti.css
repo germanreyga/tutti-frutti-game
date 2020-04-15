@@ -1,3 +1,10 @@
 .board {
-  /* display: none; */
+  display: none;
+}
+
+.word-error,
+.tutti-frutti-btn,
+.timer,
+.results {
+  display: none;
 }

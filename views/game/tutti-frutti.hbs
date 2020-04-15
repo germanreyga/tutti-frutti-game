@@ -1,25 +1,71 @@
 <main role="main" class="container">
     <div class="row">
         <div class="col-12">
-            <h1 class="center">Tutti-frutti</h1>
+            <h1 class="text-center">Tutti-frutti</h1>
+            <h2 class="text-center">You're player: <span class="player-data"></span></h2>
             <hr />
-            <div class="alert alert-primary" role="alert">
+            <div class="alert alert-primary waiting-alert" role="alert">
                 Esperando a otros jugadores...
             </div>
             <div class="board">
-                <form class="word-form">
-                    <div class="form-group">
-                        <label>Add as many words as you can!</label>
-                        <input type="text" class="form-control word" placeholder="...">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg btn-block">Add word</button>
-                </form>
+                <h2 class="text-center">Round letter is: <span class="round-letter"></span></h2>
+                <h2 class="timer text-center">TIME</h2>
+                <div class="alert alert-danger word-error" role="alert">
+                </div>
+                <div class="row">
+                    <form class="col-4 name-form">
+                        <div class="form-group">
+                            <label>Add a word for: Name</label>
+                            <div class="category" hidden>Name</div>
+                            <input type="text" class="form-control word" placeholder="...">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">Add word</button>
+                    </form>
+                    <form class="col-4 color-form">
+                        <div class="form-group">
+                            <label>Add a word for: Color</label>
+                            <div class="category" hidden>Color</div>
+                            <input type="text" class="form-control word" placeholder="...">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">Add word</button>
+                    </form>
+                    <form class="col-4 fruit-form">
+                        <div class="form-group">
+                            <label>Add a word for: Fruit</label>
+                            <div class="category" hidden>Fruit</div>
+                            <input type="text" class="form-control word" placeholder="...">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">Add word</button>
+                    </form>
+                </div>
+                <br>
+                <div class="row"><button type="submit"
+                        class="btn btn-success btn-lg btn-block tutti-frutti-btn">Tutti-frutti
+                        (STOP)</button>
+                </div>
+
                 <br />
                 <div class="card text-center">
                     <div class="card-header">Your current word list</div>
                     <div class="card-body">
                         <ul class="word-list"></ul>
                     </div>
+                </div>
+            </div>
+            <br />
+            <div class="results">
+                <table class="table table-dark">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID #</th>
+                            <th scope="col">Words</th>
+                            <th scope="col">Total score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <div class="alert alert-success winner-alert" role="alert">
                 </div>
             </div>
         </div>
