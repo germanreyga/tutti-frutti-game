@@ -38,22 +38,39 @@ app.use(express.static("public"));
 
 /* Game variables */
 var userCounter = 0;
+var participatingUserCounter = 0;
 var usersRoundData = [];
+var gameIsRunning = false;
+
+function restartGame() {
+  gameIsRunning = false;
+  usersRoundData = [];
+  participatingUserCounter = 0;
+}
 
 io.on("connection", (socket) => {
-  userCounter++;
   console.log("A user connected:", socket.id);
+  userCounter++;
 
   /* Handle disconnects */
   socket.on("disconnect", function () {
     socket.removeAllListeners();
     userCounter--;
+    console.log("User disconnected");
     if (userCounter < 2) {
       io.sockets.emit("hide-game", {
         message: "WAITING",
       });
+    } else {
+      io.sockets.emit("show-btn", {
+        class: ".start-btn",
+        counter: userCounter,
+      });
     }
-    console.log("User disconnected");
+
+    if (userCounter == 0) {
+      restartGame();
+    }
   });
 
   /* Send player id */
@@ -62,18 +79,22 @@ io.on("connection", (socket) => {
     emoji: gameLogic.generateEmoji(),
   });
 
-  /* Send random letter to start round */
-  if (userCounter > 1) {
-    io.sockets.emit("toast", {
-      message: `${userCounter} jugadores conectados!`,
-    });
-    io.sockets.emit("start-game", {
-      message: "START",
-    });
+  if (!gameIsRunning) {
+    /* Send random letter to start round */
+    if (userCounter > 1) {
+      io.sockets.emit("toast", {
+        message: `${userCounter} jugadores conectados!`,
+      });
 
-    var randomLetter = gameLogic.generateRandomLetter();
-    io.sockets.emit("random-letter", {
-      letter: randomLetter,
+      io.sockets.emit("show-btn", {
+        class: ".start-btn",
+        counter: userCounter,
+      });
+    }
+  } else {
+    socket.emit("waiting-to-finish", {
+      message:
+        "Game is running, please wait until the other players finish this round...",
     });
   }
 
@@ -86,11 +107,44 @@ io.on("connection", (socket) => {
   });
 
   /* Calculates the round scores for everyone */
+  /* Emits only when the results are complete */
   socket.on("calculate-score", async function (data) {
+    if (usersRoundData.length == 0) {
+      io.sockets.emit("toast", {
+        message: "Calculating results, please wait...",
+      });
+    }
+
     usersRoundData.push(data);
+
     var results = await gameLogic.calculateResults(usersRoundData);
+
     io.sockets.emit("show-results", { results: results });
-    usersRoundData = [];
+  });
+
+  /* Starts the round game */
+  socket.on("player-ready", async function (data) {
+    gameIsRunning = true;
+
+    var randomLetter = gameLogic.generateRandomLetter();
+    io.sockets.emit("random-letter", {
+      letter: randomLetter,
+    });
+
+    io.sockets.emit("start-game", {
+      message: "Ready to start",
+    });
+  });
+
+  /* Restarts the game */
+  socket.on("restart-game", async function (data) {
+    restartGame();
+
+    io.sockets.emit("clear-game", {
+      message:
+        "Someone restarted the game, prepare for the next round in 10 seconds...",
+      timer: gameLogic.ROUND_RESTART_TIMER,
+    });
   });
 });
 

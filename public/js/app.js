@@ -5,6 +5,7 @@ $(document).ready(function () {
   var roundData = [];
   var wordCount = 0;
   var playerId;
+  var playerEmoji;
 
   function connectToSocketIo() {
     let server = window.location.protocol + "//" + window.location.host;
@@ -22,29 +23,48 @@ $(document).ready(function () {
     window.socket.on("player-data", function (data) {
       $(".player-data").text(data.id + " " + data.emoji);
       playerId = data.id;
+      playerEmoji = data.emoji;
     });
 
     window.socket.on("start-game", function (data) {
       $(".board").show();
-      $(".waiting-alert").hide();
+      $(".waiting-room").hide();
       $(".results").hide();
     });
 
     window.socket.on("hide-game", function (data) {
       $(".board").hide();
-      $(".waiting-alert").show();
+      $(".start-btn").hide();
+      $(".waiting-room").show();
     });
 
     window.socket.on("finish-all", function (data) {
       showToast("Someone finished the round!");
       $(".timer").show();
-      startRoundTimer(data.timer, playerId, roundData);
+      startRoundTimer(data.timer, playerId, playerEmoji, roundData);
     });
 
     window.socket.on("show-results", function (data) {
       $(".board").hide();
       createResultTable(data.results);
       $(".results").show();
+    });
+
+    window.socket.on("waiting-to-finish", function (data) {
+      $(".waiting-finish-alert").text(data.message);
+      $(".waiting-finish-alert").show();
+      $(".waiting-players-alert").hide();
+    });
+
+    window.socket.on("show-btn", function (data) {
+      $(data.class).text(`${data.counter} players connected, START THE GAME`);
+      $(data.class).show();
+    });
+
+    window.socket.on("clear-game", async function (data) {
+      showToast(data.message);
+      await wait(data.timer * 1000);
+      window.location.reload();
     });
   }
 
@@ -61,7 +81,9 @@ $(document).ready(function () {
     var category = $(this).find(".category").text();
     if (typeof word !== undefined) {
       if (word.length > 0 && word.charAt(0) == roundLetter) {
-        $(".word-list").append(`<li>[${category}]: ${word}</li>`);
+        $(".word-list").append(
+          `<li><span class="badge badge-primary">${category}</span> : ${word}</li>`
+        );
         roundData.push({ category: category, word: word });
         $(this).find(".word").prop("disabled", true);
         $(this).find(".btn").attr("disabled", true);
@@ -82,6 +104,16 @@ $(document).ready(function () {
   $(".tutti-frutti-btn").click(function () {
     window.socket.emit("finished-round", { message: "Round is finished" });
   });
+
+  $(".start-btn").click(function () {
+    window.socket.emit("player-ready", { message: "Starting the round..." });
+  });
+
+  $(".restart-btn").click(function () {
+    window.socket.emit("restart-game", {
+      message: "Restarting the gound for the next round...",
+    });
+  });
 });
 
 function showToast(msg) {
@@ -100,16 +132,23 @@ async function errorAlert(msg) {
     });
 }
 
-function startRoundTimer(seconds, playerId, roundData) {
+async function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function startRoundTimer(seconds, playerId, playerEmoji, roundData) {
   $(".tutti-frutti-btn").attr("disabled", true);
 
   var start = seconds;
 
   countDownTimer = setInterval(async function () {
-    await $(".timer").text(start);
+    await $(".timer").text("Round ends in: " + start + " seconds");
     if (start <= 0) {
       window.socket.emit("calculate-score", {
         id: playerId,
+        emoji: playerEmoji,
         wordList: roundData,
       });
       await clearInterval(countDownTimer);
@@ -121,10 +160,13 @@ function startRoundTimer(seconds, playerId, roundData) {
 var bestScore = 0;
 var bestId = "No one";
 function createResultTable(data) {
-  $("results tbody").remove();
+  var participatingIds = [];
+  $(".winner-alert").text("");
+  $(".results tbody").empty();
 
   for (const content of data.results) {
     var playerId = content.id;
+    var playerEmoji = content.emoji;
     var playerScores = content.scores;
     var totalScore = 0;
     var list = "<ul>";
@@ -141,7 +183,7 @@ function createResultTable(data) {
         validity = "Word is valid";
       }
 
-      var displayText = `Category: [${category}] | Word: [${word}] | Validity: [${validity}] | Points for this word: [${points}]`;
+      var displayText = `Category: <span class="badge badge-primary">${category}</span></span> | Word: <span class="badge badge-secondary">${word}</span></span> | Validity: <span class="badge badge-info">${validity}</span></span> | Points for this word: <span class="badge badge-success">${points}</span></span>`;
 
       var listitem = `<li>${displayText}</li>`;
       list = list + listitem;
@@ -151,6 +193,9 @@ function createResultTable(data) {
       "<tr>" +
         "<td>" +
         playerId +
+        "<span>" +
+        playerEmoji +
+        "</span>" +
         "</td>" +
         "<td>" +
         list +
@@ -166,7 +211,6 @@ function createResultTable(data) {
       bestId = playerId;
     }
   }
-  $(".winner-alert").text("");
   $(".winner-alert").text(
     `Winner for this round is Player ${bestId}, with ${bestScore} points!`
   );

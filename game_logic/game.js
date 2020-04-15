@@ -5,7 +5,8 @@ exports.generateRandomLetter = () => {
   return letter;
 };
 
-exports.ROUND_FINISH_TIMER = 1;
+exports.ROUND_FINISH_TIMER = 10;
+exports.ROUND_RESTART_TIMER = 5;
 
 var playerCounter = 0;
 exports.generateId = () => {
@@ -19,10 +20,10 @@ exports.generateEmoji = () => {
 
 exports.calculateResults = async (data) => {
   results = [];
-  console.log(data);
   for (const content of data) {
     var scores = [];
     var playerId = content.id;
+    var playerEmoji = content.emoji;
     var wordList = content.wordList;
 
     for (const wordContent of wordList) {
@@ -40,7 +41,7 @@ exports.calculateResults = async (data) => {
         points: points,
       });
     }
-    results.push({ id: playerId, scores: scores });
+    results.push({ id: playerId, emoji: playerEmoji, scores: scores });
   }
   return { results: results };
 };

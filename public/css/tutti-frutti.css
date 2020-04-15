@@ -5,6 +5,8 @@
 .word-error,
 .tutti-frutti-btn,
 .timer,
-.results {
+.results,
+.start-btn,
+.waiting-finish-alert {
   display: none;
 }
