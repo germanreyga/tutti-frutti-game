@@ -21,6 +21,6 @@
     "express-validator": "^6.4.0",
     "handlebars-helpers": "^0.10.0",
     "nodemon": "^2.0.2",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.5.0"
   }
 }
